@@ -3,8 +3,13 @@
   'use strict';
   // Put the Americas east of Asia so one view spans Bangladesh → Taiwan → California across the Pacific.
   const lng=lon=>lon<-30?lon+360:lon;
-  const TILES='https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
-  const ATTR='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>';
+  // Basemap: Esri Light Gray Canvas (no API key needed), with a separate label layer on top.
+  const ESRI='https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/';
+  const ATTR='Tiles &copy; <a href="https://www.esri.com">Esri</a> &mdash; Esri, HERE, Garmin, &copy; OpenStreetMap contributors';
+  function addBase(map){
+    L.tileLayer(ESRI+'World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}',{attribution:ATTR,maxZoom:16}).addTo(map);
+    L.tileLayer(ESRI+'World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}',{maxZoom:16}).addTo(map);
+  }
   const pinIcon=(color,active)=>L.divIcon({className:'pin'+(active?' is-active':''),html:`<span style="background:${color}"></span>`,iconSize:[18,18],iconAnchor:[9,9],popupAnchor:[0,-8],tooltipAnchor:[0,-10]});
   const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
@@ -12,8 +17,8 @@
     const box=document.getElementById('explorer');if(!box||!window.L||!window.PROJECTS)return;
     const P=window.PROJECTS,CAT={};(window.CATEGORIES||[]).forEach(c=>CAT[c.id]=c);
     const rows=Array.from(box.querySelectorAll('.ex-row'));
-    const map=L.map('exMap',{scrollWheelZoom:false,worldCopyJump:false,minZoom:1,zoomSnap:.25});
-    L.tileLayer(TILES,{attribution:ATTR,subdomains:'abcd',maxZoom:19}).addTo(map);
+    const map=L.map('exMap',{scrollWheelZoom:false,worldCopyJump:false,minZoom:1,maxZoom:16,zoomSnap:.25});
+    addBase(map);
     const group=L.markerClusterGroup?L.markerClusterGroup({showCoverageOnHover:false,maxClusterRadius:44,spiderfyOnMaxZoom:true,
       iconCreateFunction:c=>L.divIcon({className:'cluster',html:`<span>${c.getChildCount()}</span>`,iconSize:[32,32]})}):L.featureGroup();
     map.addLayer(group);
@@ -53,7 +58,7 @@
     const el=document.getElementById('miniMap');if(!el||!window.L)return;
     const lat=+el.dataset.lat,lon=lng(+el.dataset.lon);
     const m=L.map(el,{zoomControl:false,scrollWheelZoom:false,dragging:false,doubleClickZoom:false,boxZoom:false,keyboard:false,touchZoom:false,attributionControl:true}).setView([lat,lon],11);
-    L.tileLayer(TILES,{attribution:ATTR,subdomains:'abcd',maxZoom:19}).addTo(m);
+    addBase(m);
     L.marker([lat,lon],{icon:pinIcon(el.dataset.color||'#555',true),interactive:false}).addTo(m);
     m.attributionControl.setPrefix(false);
   }
